@@ -14,10 +14,21 @@ from routers import pages, posts, users
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Create the database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("✓ Database initialized successfully")
+    except Exception as e:
+        print(f"✗ Database initialization error: {e}")
+
     yield
-    # Optionally, you can add code here to run on shutdown
+
+    # Cleanup on shutdown
+    try:
+        await engine.dispose()
+        print("✓ Database connection closed")
+    except Exception as e:
+        print(f"✗ Error closing database: {e}")
 
 
 app = FastAPI(lifespan=lifespan)
